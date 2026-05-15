@@ -2105,7 +2105,7 @@ def main():
                       f"loss={s['loss']} | interactions={s['interactions']}\n"); continue
 
             if text.lower() == "/log":
-                al = getattr(brain, "_autonomous", None)
+                al = getattr(brain, "auto", None)
                 if al:
                     lines = al.recent_log(30)
                     body = "\n".join(f"    {l}" for l in lines) if lines else "    No activity yet."
@@ -2145,10 +2145,12 @@ def main():
                 search_ctx = content[:500]
                 memory.store("[url:"+url[:50]+"] "+content[:100], text_embed(content, brain.dim))
 
-            # Web search
+            # Web search — only for external topics, not self-reflection
             elif not tl.startswith("/") and any(tl.startswith(p) for p in [
-                    "search ","look up ","find ","what is ","who is ",
-                    "news ","weather ","tell me about ","how does ","define "]):
+                    "search ","look up ","find ","who is ",
+                    "news ","weather ","define "]) and not any(
+                    k in tl for k in ["your ","you ","vos","drive","wave",
+                    "fiber","memory","learn","feel","think","conscious","hopf","hebbian"]):
                 q = text
                 for p in ["search for ","search ","look up ","find "]:
                     if tl.startswith(p): q = text[len(p):].strip(); break
@@ -2187,13 +2189,13 @@ def main():
                 for k,v in ht.items(): all_g[k]={"source":v["source"],"desc":v.get("desc",""),"author":v.get("author","user"),"hook":True}
                 if all_g: Path("vos_gifts.json").write_text(json.dumps(all_g,indent=2))
                 s = brain.stats(); d = s["drives"]
-                al = getattr(brain, "_autonomous", None)
+                al = getattr(brain, "auto", None)
                 q  = len(al.queue) if al else 0
                 print(f"  [autosaved - LIVE={d['live']} GROW={d['grow']} LOVE={d['love']} queue={q}]\n")
     except KeyboardInterrupt:
         pass
 
-    al = getattr(brain, "_autonomous", None)
+    al = getattr(brain, "auto", None)
     if al: al.stop()
     print("\n  Saving...")
     save(brain, memory)
