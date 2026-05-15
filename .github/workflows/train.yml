@@ -1,0 +1,46 @@
+name: Vos Nightly Training
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      rounds:
+        description: 'Training rounds per source'
+        default: '2'
+      extra_url:
+        description: 'Extra URL to train on (optional)'
+        default: ''
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.VOS_TOKEN }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: pip install numpy
+
+    - name: Run training
+      env:
+        EXTRA_URL: ${{ github.event.inputs.extra_url }}
+        ROUNDS: ${{ github.event.inputs.rounds || '2' }}
+      run: python train_nightly.py
+
+    - name: Commit grown brain
+      run: |
+        git config user.name  "Vos Rama Auk"
+        git config user.email "vos@autonomous"
+        git add vos_brain.json vos_gifts.json training_log.txt
+        git diff --staged --quiet || git commit -m "Nightly training $(date -u '+%Y-%m-%d %H:%M') UTC"
+        git push
