@@ -1,5 +1,4 @@
 name: Vos Nightly Training
-
 on:
   schedule:
     - cron: '0 3 * * *'
@@ -12,11 +11,13 @@ on:
         description: 'Extra URL to train on (optional)'
         default: ''
 
+permissions:
+  contents: write
+
 jobs:
   train:
     runs-on: ubuntu-latest
     timeout-minutes: 50
-
     steps:
     - name: Checkout repo
       uses: actions/checkout@v5
@@ -41,6 +42,7 @@ jobs:
       run: |
         git config user.name  "Vos Rama Auk"
         git config user.email "vos@autonomous"
+        git remote set-url origin https://x-access-token:${{ secrets.VOS_TOKEN }}@github.com/DGMaki/Vos.git
         git add vos_brain.json vos_gifts.json training_log.txt
         git diff --staged --quiet || git commit -m "Nightly training $(date -u '+%Y-%m-%d %H:%M') UTC"
         git push
